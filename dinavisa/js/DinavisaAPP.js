@@ -1,5 +1,5 @@
 // ========================================
-// LISTA DE VERIFICACIÓN INAN
+// LISTA DE VERIFICACIÓN DINAVISA
 // 
 // ========================================
 
@@ -682,8 +682,8 @@ Calificación: ${resultado.estado}.
 
     const nombreArchivo =
     fecha
-    ? `INAN_${fecha.replaceAll("-","")}.pdf`
-    : "INAN_Informe.pdf";
+    ? `DINAVISA_${fecha.replaceAll("-","")}.pdf`
+    : "DINAVISA_Informe.pdf";
 
     doc.save(nombreArchivo);
 
