@@ -1,0 +1,355 @@
+// ==========================================
+// GRUPO ACEROS
+// Sistema de Informes de Inspección
+// ==========================================
+
+const form = document.getElementById("inspectionForm");
+
+// ==========================================
+// GUARDAR INFORME
+// ==========================================
+
+form.addEventListener("submit", function (e) {
+
+    e.preventDefault();
+
+    calcularCumplimiento();
+
+    alert("Informe guardado correctamente.");
+
+});
+
+// ==========================================
+// CALCULAR CUMPLIMIENTO
+// ==========================================
+
+function calcularCumplimiento() {
+
+    let conformes = 0;
+    let noConformes = 0;
+    let noAplica = 0;
+    let total = 0;
+
+    for (let i = 1; i <= 4; i++) {
+
+        const respuesta = document.querySelector(
+            `input[name="item${i}"]:checked`
+        );
+
+        if (respuesta) {
+
+            total++;
+
+            switch (respuesta.value) {
+
+                case "conforme":
+                    conformes++;
+                    break;
+
+                case "noconforme":
+                    noConformes++;
+                    break;
+
+                case "na":
+                    noAplica++;
+                    break;
+            }
+        }
+    }
+
+    let porcentaje = 0;
+
+    if ((conformes + noConformes) > 0) {
+
+        porcentaje =
+            (conformes / (conformes + noConformes)) * 100;
+    }
+
+    let estado = "";
+
+    if (porcentaje >= 90) {
+
+        estado = "EXCELENTE";
+
+    } else if (porcentaje >= 80) {
+
+        estado = "BUENO";
+
+    } else if (porcentaje >= 60) {
+
+        estado = "REGULAR";
+
+    } else {
+
+        estado = "DEFICIENTE";
+    }
+
+    const resumen = `
+        <div class="alert alert-info">
+
+            <h5>Resultado General</h5>
+
+            <p><strong>Conformes:</strong>
+            ${conformes}</p>
+
+            <p><strong>No Conformes:</strong>
+            ${noConformes}</p>
+
+            <p><strong>No Aplica:</strong>
+            ${noAplica}</p>
+
+            <p><strong>Cumplimiento:</strong>
+            ${porcentaje.toFixed(2)}%</p>
+
+            <p><strong>Calificación:</strong>
+            ${estado}</p>
+
+        </div>
+    `;
+
+    document.getElementById(
+        "resultadoCumplimiento"
+    ).innerHTML = resumen;
+
+    return {
+        conformes,
+        noConformes,
+        noAplica,
+        porcentaje,
+        estado
+    };
+}
+
+// ==========================================
+// GENERAR PDF
+// ==========================================
+
+document
+    .querySelector(".btn-success")
+    .addEventListener(
+        "click",
+        generarPDF
+    );
+
+function generarPDF() {
+
+    const resultado =
+        calcularCumplimiento();
+
+    const { jsPDF } = window.jspdf;
+
+    const doc = new jsPDF();
+
+    // Datos Generales
+
+    const fecha =
+        document.getElementById(
+            "fecha"
+        ).value;
+
+    const hora =
+        document.getElementById(
+            "hora"
+        ).value;
+
+    const sucursal =
+        document.getElementById(
+            "sucursal"
+        ).value;
+
+    const responsable =
+        document.getElementById(
+            "responsable"
+        ).value;
+
+    const area =
+        document.getElementById(
+            "area"
+        ).value;
+
+    const tipo =
+        document.getElementById(
+            "tipoInspeccion"
+        ).value;
+
+    const observaciones =
+        document.getElementById(
+            "observaciones"
+        ).value;
+
+    const hallazgos =
+        document.getElementById(
+            "hallazgos"
+        ).value;
+
+    const acciones =
+        document.getElementById(
+            "acciones"
+        ).value;
+
+    const recomendaciones =
+        document.getElementById(
+            "recomendaciones"
+        ).value;
+
+    // Encabezado
+
+    doc.setFontSize(18);
+    doc.text(
+        "GRUPO ACEROS",
+        20,
+        20
+    );
+
+    doc.setFontSize(14);
+    doc.text(
+        "INFORME DE INSPECCIÓN",
+        20,
+        30
+    );
+
+    doc.setFontSize(10);
+
+    // Datos
+
+    doc.text(
+        `Fecha: ${fecha}`,
+        20,
+        45
+    );
+
+    doc.text(
+        `Hora: ${hora}`,
+        20,
+        52
+    );
+
+    doc.text(
+        `Sucursal: ${sucursal}`,
+        20,
+        59
+    );
+
+    doc.text(
+        `Responsable: ${responsable}`,
+        20,
+        66
+    );
+
+    doc.text(
+        `Área: ${area}`,
+        20,
+        73
+    );
+
+    doc.text(
+        `Tipo de Inspección: ${tipo}`,
+        20,
+        80
+    );
+
+    // Resumen Ejecutivo
+
+    doc.setFontSize(12);
+
+    doc.text(
+        "RESUMEN EJECUTIVO",
+        20,
+        95
+    );
+
+    doc.setFontSize(10);
+
+    doc.text(
+        `Conformes: ${resultado.conformes}`,
+        20,
+        105
+    );
+
+    doc.text(
+        `No Conformes: ${resultado.noConformes}`,
+        20,
+        112
+    );
+
+    doc.text(
+        `Cumplimiento: ${resultado.porcentaje.toFixed(2)}%`,
+        20,
+        119
+    );
+
+    doc.text(
+        `Calificación: ${resultado.estado}`,
+        20,
+        126
+    );
+
+    // Observaciones
+
+    doc.text(
+        "OBSERVACIONES",
+        20,
+        140
+    );
+
+    doc.text(
+        observaciones || "-",
+        20,
+        148,
+        { maxWidth: 170 }
+    );
+
+    // Hallazgos
+
+    doc.text(
+        "HALLAZGOS",
+        20,
+        175
+    );
+
+    doc.text(
+        hallazgos || "-",
+        20,
+        183,
+        { maxWidth: 170 }
+    );
+
+    // Acciones
+
+    doc.addPage();
+
+    doc.text(
+        "ACCIONES CORRECTIVAS",
+        20,
+        20
+    );
+
+    doc.text(
+        acciones || "-",
+        20,
+        30,
+        { maxWidth: 170 }
+    );
+
+    // Recomendaciones
+
+    doc.text(
+        "RECOMENDACIONES",
+        20,
+        80
+    );
+
+    doc.text(
+        recomendaciones || "-",
+        20,
+        90,
+        { maxWidth: 170 }
+    );
+
+    // Descargar
+
+    doc.save(
+        "Informe_Inspeccion.pdf"
+    );
+}
+``
