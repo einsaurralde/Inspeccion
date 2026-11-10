@@ -29,7 +29,8 @@ const checklist = [
 {
     seccion: "ABASTECIMIENTO DE AGUA",
     items: [
-        "Sistema eficaz de evacuación de efluentes y aguas residuales, utilización de agua potable y análisis anual"
+        "Sistema eficaz de evacuación de efluentes y aguas residuales",
+        "Análisis de agua vigente"
     ]
 },
 
@@ -65,7 +66,7 @@ const checklist = [
 {
     seccion: "HIGIENE Y SALUD DEL PERSONAL",
     items: [
-        "Ausencia de manipuladores enfermos",
+        "Análisis clínico anual vigente",
         "No se observan hábitos antihigiénicos",
         "Uniformes utilizados correctamente",
         "Ingreso de visitas con medidas de higiene"
@@ -100,15 +101,19 @@ const checklist = [
 {
     seccion: "PROCEDIMIENTOS Y REGISTROS",
     items: [
-        "Registros de producción y distribución",
-        "Registros de temperatura",
+        "Registros de control de producción",
+        "Registros de distribución",
+        "Registros de control de T °C de equipos",
+        "Registros de control de camiones",
+        "Registros de control de ambiente y humedad",
         "Registros de control de MP e insumos",
-        "Registros de limpieza y capacitación",
-        "Programa anual de mantenimiento",
-        "Procedimientos de limpieza y retiro de productos",
-        "Procedimientos de BPM y capacitación",
+        "Controles laboratoriales internos",
+        "Registros de limpiezas de áreas/sanitarios",
+        "Registros de capacitación",
+        "Programas anuales de mantenimiento de equipos, capacitación, fumigación",
         "Certificados médicos del personal",
-        "Análisis anual de agua"
+        "Análisis anual de agua",
+        "Documentos de fumigación"
     ]
 }
 
@@ -142,6 +147,7 @@ checklist.forEach(grupo => {
                     <th>Verificación</th>
                     <th width="120">Conforme</th>
                     <th width="120">No Conforme</th>
+                    <th width="120">N/A</th>
 
                 </tr>
 
@@ -176,6 +182,12 @@ checklist.forEach(grupo => {
                     name="item${contador}"
                     value="noconforme">
 
+            </td>
+                <td class="text-center">
+                <input
+                    type="radio"
+                    name="item${contador}"
+                    value="na">
             </td>
 
         </tr>
@@ -224,26 +236,35 @@ function calcularResultado(){
 
     let conformes = 0;
     let noConformes = 0;
+    let noAplica = 0;
 
     seleccionados.forEach(control => {
 
         if(control.value === "conforme"){
+
             conformes++;
-        }else{
+
+        }else if(control.value === "noconforme"){
+
             noConformes++;
+
+        }else if(control.value === "na"){
+
+            noAplica++;
+
         }
 
     });
 
-    const total =
-    conformes + noConformes;
+    const totalEvaluados =
+        conformes + noConformes;
 
     let porcentaje = 0;
 
-    if(total > 0){
+    if(totalEvaluados > 0){
 
         porcentaje =
-        (conformes / total) * 100;
+            (conformes / totalEvaluados) * 100;
 
     }
 
@@ -268,43 +289,52 @@ function calcularResultado(){
     }
 
     document
-    .getElementById(
-        "resultadoCumplimiento"
-    )
-    .innerHTML = `
+        .getElementById(
+            "resultadoCumplimiento"
+        )
+        .innerHTML = `
+        <div class="alert alert-info">
 
-    <div class="alert alert-info">
+            <h5>Resultado General</h5>
 
-        <h5>Resultado General</h5>
+            <p>
+                Conformes:
+                <strong>${conformes}</strong>
+            </p>
 
-        <p>
-            Conformes:
-            <strong>${conformes}</strong>
-        </p>
+            <p>
+                No Conformes:
+                <strong>${noConformes}</strong>
+            </p>
 
-        <p>
-            No Conformes:
-            <strong>${noConformes}</strong>
-        </p>
+            <p>
+                No Aplica:
+                <strong>${noAplica}</strong>
+            </p>
 
-        <p>
-            Cumplimiento:
-            <strong>${porcentaje.toFixed(2)}%</strong>
-        </p>
+            <p>
+                Total Evaluados:
+                <strong>${totalEvaluados}</strong>
+            </p>
 
-        <p>
-            Calificación:
-            <strong>${estado}</strong>
-        </p>
+            <p>
+                Cumplimiento:
+                <strong>${porcentaje.toFixed(2)}%</strong>
+            </p>
 
-    </div>
+            <p>
+                Calificación:
+                <strong>${estado}</strong>
+            </p>
 
+        </div>
     `;
 
     return {
-        total,
+        total: totalEvaluados,
         conformes,
         noConformes,
+        noAplica,
         porcentaje,
         estado
     };
@@ -359,8 +389,67 @@ function obtenerHallazgos(){
     return hallazgos;
 
 }
+// GRAFICOS //    
+function generarGrafico(resultado){
+    
+    const canvas =
+    document.getElementById("graficoPDF");
 
-function generarPDF(){
+    const ctx =
+    canvas.getContext("2d");
+
+    Chart.getChart(canvas)?.destroy();
+
+    new Chart(ctx, {
+        type: "doughnut",
+        data: {
+            labels: [
+                "Conformes",
+                "No Conformes",
+                "N/A"
+            ],
+            datasets: [{
+                data: [
+                    resultado.conformes,
+                    resultado.noConformes,
+                    resultado.noAplica
+                ],
+                backgroundColor: [
+                    "#28a745",
+                    "#dc3545",
+                    "#6c757d"
+                ]
+            }]
+        },
+        options: {
+            responsive: false,
+            animation: false,
+            cutout: "70%",
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+
+    return new Promise(resolve => {
+
+        setTimeout(() => {
+
+            resolve(
+                canvas.toDataURL(
+                    "image/png"
+                )
+            );
+
+        }, 500);
+
+    });
+
+}
+
+async function generarPDF(){
 
     const resultado =
     calcularResultado();
@@ -388,6 +477,25 @@ function generarPDF(){
 
     const observaciones =
     document.getElementById("observaciones").value || "-";
+
+    let colorEstado = [220,53,69];
+
+    if(resultado.porcentaje >= 90){
+
+        colorEstado = [25,135,84];
+
+    }
+    else if(resultado.porcentaje >= 80){
+
+     colorEstado = [255,193,7];
+
+    }
+    
+    else if(resultado.porcentaje >= 70){
+
+    colorEstado = [255,140,0];
+
+    }
 
     // Encabezado
 
@@ -456,16 +564,16 @@ function generarPDF(){
     doc.setFont(undefined,"normal");
 
     const resumen = `
-Se verificaron ${resultado.total} controles.
+    Durante la inspección se evaluaron ${resultado.total} controles aplicables.
 
-${resultado.conformes} fueron conformes.
+    Se registraron ${resultado.conformes} controles conformes y ${resultado.noConformes} controles no conformes.
 
-${resultado.noConformes} fueron no conformes.
+    Adicionalmente, ${resultado.noAplica} controles fueron catalogados como N/A (No Aplica), por no corresponder a las condiciones observadas durante la verificación.
 
-Cumplimiento general: ${resultado.porcentaje.toFixed(2)}%.
+    El porcentaje de cumplimiento obtenido fue de ${resultado.porcentaje.toFixed(2)}%.
 
-Calificación: ${resultado.estado}.
-`;
+    De acuerdo con los criterios establecidos, la calificación general de la inspección es: ${resultado.estado}.
+    `;
 
     const resumenLineas =
     doc.splitTextToSize(
@@ -483,55 +591,272 @@ Calificación: ${resultado.estado}.
 
     // Indicadores
 
-    const indicadores = [
+ const indicadores = [
+    ["Evaluados", resultado.total],
+    ["Conformes", resultado.conformes],
+    ["No Conformes", resultado.noConformes],
+    ["No Aplica", resultado.noAplica],
+    ["Cumplimiento", resultado.porcentaje.toFixed(2) + "%"]
+ ];
 
-        ["Evaluados", resultado.total],
-        ["Conformes", resultado.conformes],
-        ["No Conformes", resultado.noConformes],
-        ["Cumplimiento", resultado.porcentaje.toFixed(2)+"%"]
 
-    ];
+    
 
-    indicadores.forEach((fila,index)=>{
+// ========================================
+// PAGINA EJECUTIVA DE INDICADORES
+// ========================================
 
-        const filaY =
-        y + (index * 8);
+    doc.addPage();
 
-        doc.rect(
-            15,
-            filaY,
-            100,
-            8
-        );
+    y = 20;
 
-        doc.line(
-            70,
-            filaY,
-            70,
-            filaY + 8
-        );
+    // Título
 
-        doc.text(
-            fila[0],
-            20,
-            filaY + 5
-        );
+    doc.setFillColor(0,51,102);
 
-        doc.text(
-            String(fila[1]),
-            75,
-            filaY + 5
-        );
+    doc.rect(
+        0,
+        0,
+        210,
+        25,
+        "F"
+    );
 
-    });
+    doc.setTextColor(255,255,255);
 
-    y += 45;
+    doc.setFontSize(18);
+
+    doc.text(
+    "RESUMEN DE CUMPLIMIENTO",
+    15,
+    16
+    );
+
+    doc.setTextColor(0,0,0);
+
+    // Fecha
+
+    doc.setFontSize(10);
+
+    doc.text(
+        `Fecha: ${fecha}`,
+        15,
+        35
+    );
+
+    doc.text(
+        `Inspector: ${inspector}`,
+        120,
+        35
+    );
+
+    y = 50;
+    
+    const imagenGrafico =
+    await generarGrafico(resultado);
+
+    doc.addImage(
+    imagenGrafico,
+    "PNG",
+    55,
+    y,
+    100,
+    100
+    );
+
+    y += 120;
+
+    // Leyenda manual
+
+    doc.setFillColor(40,167,69);
+    doc.rect(35, y, 6, 6, "F");
+
+    doc.text(
+    `Conformes (${resultado.conformes})`,
+    45,
+    y + 5
+    );
+
+    doc.setFillColor(220,53,69);
+    doc.rect(95, y, 6, 6, "F");
+
+    doc.text(
+    `No Conformes (${resultado.noConformes})`,
+    105,
+    y + 5
+    );
+
+    doc.setFillColor(108,117,125);
+    doc.rect(170, y, 6, 6, "F");
+
+    doc.text(
+    `N/A (${resultado.noAplica})`,
+    180,
+    y + 5
+    );
+
+    y += 10;
+
+    // Verde
+    doc.setFillColor(40,167,69);
+    doc.rect(40, y + 125, 6, 6, "F");
+
+    doc.text(
+    `Conformes (${resultado.conformes})`,
+    50,
+    y + 130
+    );
+
+    // Rojo
+    doc.setFillColor(220,53,69);
+    doc.rect(90, y + 125, 6, 6, "F");
+
+    doc.text(
+    `No Conformes (${resultado.noConformes})`,
+    100,
+    y + 130
+    );
+
+    // Gris
+    doc.setFillColor(108,117,125);
+    doc.rect(150, y + 125, 6, 6, "F");
+
+    doc.text(
+    `N/A (${resultado.noAplica})`,
+    160,
+    y + 130
+    );
+
+    doc.setDrawColor(200);
+    doc.setFillColor(245,245,245);
+
+    if(y > 200){
+
+        doc.addPage();
+
+        y = 20;
+
+    }
+    doc.roundedRect(
+        20,
+        y,
+        170,
+        35,
+        3,
+        3,
+        "FD"
+    );
+
+    //doc.setFontSize(20);
+   // doc.setFont(undefined,"bold");
+
+    doc.text(
+    `${resultado.porcentaje.toFixed(2)}%`,
+    105,
+    y + 12,
+    { align: "center" }
+    );
+
+    doc.setFontSize(9);
+    doc.setFont(undefined,"normal");
+
+    doc.text(
+    "CUMPLIMIENTO GENERAL",
+    105,
+    y + 19,
+    { align: "center" }
+    );
+
+doc.setTextColor(
+    colorEstado[0],
+    colorEstado[1],
+    colorEstado[2]
+);
+
+doc.setFontSize(16);
+doc.setFont(undefined,"bold");
+
+doc.text(
+    resultado.estado,
+    105,
+    y + 30,
+    { align: "center" }
+);
+
+doc.setTextColor(0,0,0);
+
+y += 60;
+
+doc.setFontSize(12);
+doc.setFont(undefined,"bold");
+
+doc.text(
+    "DETALLE DE RESULTADOS",
+    20,
+    y
+);
+
+y += 10;
+
+const resumenDatos = [
+
+    ["Conformes", resultado.conformes],
+    ["No Conformes", resultado.noConformes],
+    ["N/A", resultado.noAplica],
+    ["Evaluados", resultado.total]
+
+];
+
+resumenDatos.forEach((fila,index)=>{
+
+    const filaY =
+    y + (index * 8);
+
+    doc.rect(
+        20,
+        filaY,
+        80,
+        8
+    );
+
+    doc.rect(
+        100,
+        filaY,
+        30,
+        8
+    );
+
+    doc.text(
+        fila[0],
+        25,
+        filaY + 7
+    );
+
+    doc.text(
+        String(fila[1]),
+        112,
+        filaY + 7
+    );
+
+});
+
+doc.addPage();
+
+y = 20;
+
 
     // Hallazgos
 
     doc.setFontSize(14);
     doc.setFont(undefined,"bold");
+   
+    if(y > 220){
 
+    doc.addPage();
+
+    y = 20;
+
+    }
     doc.text(
         "HALLAZGOS DETECTADOS",
         15,
@@ -675,7 +1000,7 @@ Calificación: ${resultado.estado}.
         doc.text(
             `VERIFICACIÓN SANITARIA DINAVISA | Página ${i} de ${paginas}`,
             15,
-            285
+            290
         );
 
     }
