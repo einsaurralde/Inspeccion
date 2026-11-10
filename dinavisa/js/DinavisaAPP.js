@@ -113,7 +113,19 @@ const checklist = [
         "Programas anuales de mantenimiento de equipos, capacitación, fumigación",
         "Certificados médicos del personal",
         "Análisis anual de agua",
-        "Documentos de fumigación"
+        "Documentos de fumigación",
+        "Procedimiento de ingreso y egreso del personal / visitantes",
+        "Procedimiento de recepción y almacenamiento de materia prima",
+        "Procedimiento para manejo y disposición de residuos",
+        "Procedimiento buenas prácticas de manufactura",
+        "Procedimiento de limpieza de áreas y equipos",
+        "Procedimiento de salud ocupacional",
+        "Procedimiento de capacitación al personal",
+        "Procedimiento de control de producto terminado y retiro de productos",
+        "Procedimiento de mantenimiento",
+        "Procedimiento de distribución",
+        "Procedimiento de habilitación y evaluación de proveedores",
+        "Procedimiento de trazabilidad"
     ]
 }
 
